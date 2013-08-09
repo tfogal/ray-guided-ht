@@ -55,13 +55,12 @@ __device__ static void
 flush(unsigned* ht, const size_t htlen, unsigned pending[16], const size_t n)
 {
 	for(size_t i=0; i < n; ++i) {
-		size_t rehash_count = 0;
+		size_t iter = 0;
 		do {
-			const unsigned hpos = (pending[i] + rehash_count) %
-			                      (htlen);
+			const unsigned hpos = (pending[i] + iter) % htlen;
 			uint32_t value = atomicCAS(&ht[hpos], 0U, pending[i]);
 			if(value == 0 || value == pending[i]) { break; }
-		} while(++rehash_count < 10);
+		} while(++iter < 10);
 		/* We could atomicExch pending[i] back to 0 now.. but there's
 		 * not really a point. */
 		/* atomicExch(&pending[i], 0U); */
