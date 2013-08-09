@@ -203,7 +203,6 @@ main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	fprintf(stderr, "%zu-element hash table.\n", N_ht);
 	/* create our hash table, and a chunk of memory to read it back into
 	 * when we're done.  We could also use pinned memory.. but...
 	 * well, we should try that, too. */
@@ -215,7 +214,6 @@ main(int argc, char* argv[])
 		        N_ht, cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
-	fprintf(stderr, "dev alloc ht okay\n");
 
 	unsigned* htable_host = (unsigned*)calloc(sizeof(unsigned), N_ht);
 	assert(htable_host); /* sometimes I <3 not being a real SW developer. */
@@ -252,8 +250,6 @@ main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	fprintf(stderr, "dev alloc bricks okay\n");
-
 	err = cudaMemcpy(bricks_dev, bricks_host, brickbytes,
 	                 cudaMemcpyHostToDevice);
 	if(err != cudaSuccess) {
@@ -261,15 +257,18 @@ main(int argc, char* argv[])
 		        cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
-	fprintf(stderr, "bricks cpy okay\n");
 
-	dim3 blocks(60, 33);
-#if 1
-	ht_inserts<<<blocks, 32>>>(htable_dev, N_ht, bricks_dev, nrequests);
-#else
-	ht_inserts_simple<<<blocks, 32>>>(htable_dev, N_ht, bricks_dev,
-	                                  nrequests);
-#endif
+	const size_t bf = blockingfactor();
+	const size_t bdims[] = { main_brickdims[0], main_brickdims[1],
+	                         main_brickdims[2] };
+	dim3 blocks(bdims[0]/bf, bdims[1]/bf, bdims[2]/bf);
+	if(naive()) {
+                ht_inserts_simple<<<blocks, 32>>>(htable_dev, N_ht, bricks_dev,
+		                                  nrequests);
+	} else {
+                ht_inserts<<<blocks, 32>>>(htable_dev, N_ht, bricks_dev,
+		                           nrequests);
+	}
 
 	if((err = cudaGetLastError()) != cudaSuccess) {
 		fprintf(stderr, "Failed to launch kernel: %s\n",

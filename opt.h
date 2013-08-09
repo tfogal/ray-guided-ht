@@ -14,6 +14,8 @@ size_t bricksY();
 size_t bricksZ();
 size_t LODs();
 const char* requestfile();
+size_t blockingfactor();
+bool naive();
 
 #ifdef __cplusplus
 }

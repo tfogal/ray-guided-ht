@@ -7,6 +7,8 @@ static gint ht_size;
 static gint bricks[3]; /* per-dimension. */
 static gint n_lod;
 static gchar* requestf; /* where to read requests from */
+static gint blockfactor;
+static bool ht_naive;
 static GOptionEntry options[] = {
 	{"debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Debug mode", NULL},
 	{"hashsz", 'h', 0, G_OPTION_ARG_INT, &ht_size, "HT size in X", NULL},
@@ -16,6 +18,10 @@ static GOptionEntry options[] = {
 	{"lods", 'l', 0, G_OPTION_ARG_INT, &n_lod, "number of LODs", NULL},
 	{"requests", 'r', 0, G_OPTION_ARG_FILENAME, &requestf,
 	 "requests to simulate, file", NULL},
+	{"blockfactor", 'b', 0, G_OPTION_ARG_INT, &blockfactor,
+	 "CUDA kernel blocking factor; divide bricks by this", NULL},
+	{"naive", 'n', false, G_OPTION_ARG_NONE, &ht_naive,
+	 "use naive hash table algorithm (clone of IV3D's GLSL)", NULL},
 	{ NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -58,3 +64,5 @@ size_t bricksY() { return (size_t)bricks[1]; }
 size_t bricksZ() { return (size_t)bricks[2]; }
 size_t LODs() { return (size_t)n_lod; }
 const char* requestfile() { return (const char*)requestf; }
+size_t blockingfactor() { return (size_t)blockfactor; }
+bool naive() { return ht_naive; }
