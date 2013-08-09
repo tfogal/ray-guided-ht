@@ -36,6 +36,39 @@ const size_t MAX_BRICK_REQUESTS = 512;
 
 __constant__ unsigned brickdims[4] = {0};
 
+/* try to find the given value in the table.  this may not occur at the hashed
+ * position, of course, since collisions may occur.  it would be at subsequent
+ * elements, then. */
+__device__ static bool
+find_entry(unsigned* ht, const size_t htlen, unsigned value)
+{
+#	define ELEMS_TO_SEARCH 4
+	for(size_t i=0; i < ELEMS_TO_SEARCH; ++i) {
+		const unsigned idx = (value + i) % htlen;
+		if(ht[idx] == value) { return true; }
+	}
+	return false;
+}
+
+/* flushes all the entries from 'pending' to the hash table. */
+__device__ static void
+flush(unsigned* ht, const size_t htlen, unsigned pending[16], const size_t n)
+{
+	for(size_t i=0; i < n; ++i) {
+		size_t rehash_count = 0;
+		do {
+			const unsigned hpos = (pending[i] + rehash_count) %
+			                      (htlen);
+			uint32_t value = atomicCAS(&ht[hpos], 0U, pending[i]);
+			if(value == 0 || value == pending[i]) { break; }
+		} while(++rehash_count < 10);
+		/* We could atomicExch pending[i] back to 0 now.. but there's
+		 * not really a point. */
+		/* atomicExch(&pending[i], 0U); */
+	}
+}
+
+
 /** @param ht the hash table
  * @param ??? the dimensions of the hash table, in shared mem
  * @param list of bricks to access.  this is 4-components! (x,y,z, LOD) */
@@ -43,26 +76,52 @@ __global__ void
 ht_inserts(unsigned* ht, const size_t htlen, const uint32_t* bricks,
            const size_t nbricks)
 {
+	/* shared memory for writes which should get added to 'ht'. */
+	__shared__ unsigned pending[16];
+	__shared__ unsigned pidx;
+
+	/* __shared__ vars can't have initializers; do it manually. */
+	for(size_t i=0; i < 16; i++) { pending[i] = 0; }
+	pidx = 0;
+	__syncthreads();
+
 	for(size_t i=0; i < MAX_BRICK_REQUESTS; ++i) {
 		const unsigned bid = devrand() % nbricks;
-		uint16_t rehash_count = 0;
 		unsigned serialized = serialize(&bricks[bid*4], brickdims);
-		do {
-			const unsigned hpos = (serialized + rehash_count) %
-			                      (htlen);
-			uint32_t imgvalue = atomicCAS(&ht[hpos], 0U,
-			                              serialized);
-			if(imgvalue == 0 || imgvalue == serialized) { break; }
-		} while(++rehash_count < 10);
+
+		/* Is it already in the table?  then move on. */
+		if(find_entry(ht, htlen, serialized)) { continue; }
+
+		/* Otherwise, add it to our list of pending writes into the
+		 * table.  But, that might cause it to overflow, which means
+		 * we'd have to flush it. */
+		if(pidx >= 16) {
+			flush(ht, htlen, pending, 16);
+			atomicCAS(&pidx, 16U, 0U);
+		} else {
+			atomicExch(&pending[pidx], serialized);
+			atomicAdd(&pidx, 1);
+		}
 	}
+	flush(ht, htlen, pending, pidx);
 }
 
-/** @param nbricks number of bricks; note each brick is 4 values.
- * @param bdims number of bricks, per dimension. */
-static void
-get_requests(uint32_t* reqs, size_t nbricks, const unsigned bdims[4])
+__global__ void
+ht_inserts_simple(unsigned* ht, const size_t htlen, const uint32_t* bricks,
+                  const size_t nbricks)
 {
-	memset(reqs, 0, nbricks*4*sizeof(uint32_t));
+	for(size_t i=0; i < MAX_BRICK_REQUESTS; ++i) {
+		const unsigned bid = devrand() % nbricks;
+		unsigned serialized = serialize(&bricks[bid*4], brickdims);
+
+		unsigned rehash_count = 0;
+		do {
+			const unsigned hpos = (serialized + rehash_count) %
+			                       htlen;
+			unsigned val = atomicCAS(&ht[hpos], 0U, serialized);
+			if(val == 0 || val == serialized) { break; }
+		} while(++rehash_count < 10);
+	}
 }
 
 /** reads requests from the given filename.
@@ -102,13 +161,39 @@ requests_from(const char* filename, size_t* nreqs)
 	return requests;
 }
 
+/* are the given requests valid?  they need to fall within brick indices.
+ * @param requests the requests the examine
+ * @param nreq number of requests; 'requests' is 4*nreq elems long.
+ * @param bdims the brick dimensions.
+ * @param[out] erridx if nonnull, the request which was in error. */
+static bool
+requests_verify(const uint32_t* requests, const size_t nreq,
+                const unsigned bdims[4], size_t* erridx)
+{
+	/* this actually isn't great, because we assume that the valid indices
+	 * are 0 to bdims[0]*bdims[1]*bdims[2]*bdims[3].  In reality, the
+	 * number of bricks decreases by half every time we drop to a coarser
+	 * LOD, so there are far fewer bricks.
+	 * This should at least catch the most egregious errors. */
+	for(size_t r=0; r < nreq; ++r) {
+		for(size_t dim=0; dim < 4; ++dim) {
+			if(requests[r*4+dim] >= bdims[dim]) {
+				if(erridx != NULL) { *erridx = r; }
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 int
 main(int argc, char* argv[])
 {
 	argparse(argc, argv);
 
 	const size_t N_ht = htN();
-	const unsigned main_brickdims[4] = { bricksX(), bricksY(), bricksZ(), LODs() };
+	const unsigned main_brickdims[4] = { bricksX(), bricksY(), bricksZ(),
+	                                     LODs() };
 
 	cudaError_t cerr = cudaMemcpyToSymbol(brickdims, main_brickdims,
 	                                      sizeof(unsigned)*4, 0,
@@ -146,10 +231,15 @@ main(int argc, char* argv[])
 	}
 
 	size_t nrequests;
-	uint32_t* bricks_host = requests_from(requestfile(), &nrequests);
+	unsigned* bricks_host = requests_from(requestfile(), &nrequests);
 	if(bricks_host == NULL) {
 		fprintf(stderr, "Could not read requests from %s!\n",
 		        requestfile());
+		exit(EXIT_FAILURE);
+	}
+	size_t fault;
+	if(!requests_verify(bricks_host, nrequests, main_brickdims, &fault)) {
+		fprintf(stderr, "Brick request %zu is garbage.\n", fault);
 		exit(EXIT_FAILURE);
 	}
 	const size_t brickbytes = nrequests * 4 * sizeof(uint32_t);
@@ -162,6 +252,7 @@ main(int argc, char* argv[])
 		        cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
+
 	fprintf(stderr, "dev alloc bricks okay\n");
 
 	err = cudaMemcpy(bricks_dev, bricks_host, brickbytes,
@@ -172,14 +263,13 @@ main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 	fprintf(stderr, "bricks cpy okay\n");
-	const size_t nbricks = nrequests;
-#if 0
-	dim3 blocks(120, 120);
-	dim3 threads(16, 9);
-	ht_inserts<<<blocks, threads>>>(htable_dev, N_ht, bricks_dev, nbricks);
+
+	dim3 blocks(60, 33);
+#if 1
+	ht_inserts<<<blocks, 32>>>(htable_dev, N_ht, bricks_dev, nrequests);
 #else
-	ht_inserts<<<1, 128>>>(htable_dev, N_ht, bricks_dev, nbricks);
-	                       
+	ht_inserts_simple<<<blocks, 32>>>(htable_dev, N_ht, bricks_dev,
+	                                  nrequests);
 #endif
 
 	if((err = cudaGetLastError()) != cudaSuccess) {
