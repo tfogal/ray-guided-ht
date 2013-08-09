@@ -16,6 +16,7 @@ size_t LODs();
 const char* requestfile();
 size_t blockingfactor();
 bool naive();
+bool verbose();
 
 #ifdef __cplusplus
 }

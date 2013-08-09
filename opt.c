@@ -9,6 +9,7 @@ static gint n_lod;
 static gchar* requestf; /* where to read requests from */
 static gint blockfactor;
 static bool ht_naive;
+static bool is_verbose;
 static GOptionEntry options[] = {
 	{"debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Debug mode", NULL},
 	{"hashsz", 'h', 0, G_OPTION_ARG_INT, &ht_size, "HT size in X", NULL},
@@ -22,6 +23,8 @@ static GOptionEntry options[] = {
 	 "CUDA kernel blocking factor; divide bricks by this", NULL},
 	{"naive", 'n', false, G_OPTION_ARG_NONE, &ht_naive,
 	 "use naive hash table algorithm (clone of IV3D's GLSL)", NULL},
+	{"verbose", 'v', false, G_OPTION_ARG_NONE, &is_verbose,
+	 "enable chatty/annoying output.", NULL},
 	{ NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -66,3 +69,4 @@ size_t LODs() { return (size_t)n_lod; }
 const char* requestfile() { return (const char*)requestf; }
 size_t blockingfactor() { return (size_t)blockfactor; }
 bool naive() { return ht_naive; }
+bool verbose() { return is_verbose; }
