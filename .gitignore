@@ -1,3 +1,9 @@
 *.o
 HashSize.eps
 HashSize.pdf
+.??*.log
+Hash
+abc.log
+*.data
+bug-in-go.go
+rm
