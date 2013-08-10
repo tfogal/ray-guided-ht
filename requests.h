@@ -1,8 +1,11 @@
 #ifndef TJF_HT_REQUESTS_H
 #define TJF_HT_REQUESTS_H
-#include <inttypes.h>
-#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
+
+#ifndef WIN32
+#include <stdbool.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

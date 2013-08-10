@@ -4,7 +4,9 @@
 extern "C" {
 #endif
 
+#ifndef WIN32
 #include <stdbool.h>
+#endif
 
 void argparse(int argc, char* argv[]);
 

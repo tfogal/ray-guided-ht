@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <errno.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
@@ -186,7 +186,7 @@ remove_entries(const unsigned* entries, const size_t n_entries,
 			} while(idx_for_brick(brickID, bricks, n_bricks) !=
 			        n_bricks);
 			if(verbose()) {
-				printf("Removed %zu bricks for %u\n", count,
+				printf("Removed %u bricks for %u\n", count,
 				       entries[i]);
 			}
 		}
@@ -220,7 +220,7 @@ duplicates(const unsigned* ht, const size_t n_entries)
 	for(size_t i=0; i < n_entries; ++i) {
 		if(count(ht[i], ht, n_entries) > 1) {
 			if(verbose()) {
-				fprintf(stderr, "%u appears %zu times!\n",
+				fprintf(stderr, "%u appears %u times!\n",
 				        ht[i], count(ht[i], ht, n_entries));
 				return true;
 			}
@@ -254,7 +254,7 @@ main(int argc, char* argv[])
 	cudaError_t err = cudaMalloc(&htable_dev,
 	                             N_ht*sizeof(unsigned));
 	if(err != cudaSuccess) {
-		fprintf(stderr, "dev alloc of HT (size %zu) failed!: %s.\n",
+		fprintf(stderr, "dev alloc of HT (size %u) failed!: %s.\n",
 		        N_ht, cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
@@ -280,7 +280,7 @@ main(int argc, char* argv[])
 	}
 	size_t fault;
 	if(!requests_verify(bricks_host, nrequests, main_brickdims, &fault)) {
-		fprintf(stderr, "Brick request %zu is garbage.\n", fault);
+		fprintf(stderr, "Brick request %u is garbage.\n", fault);
 		exit(EXIT_FAILURE);
 	}
 	const size_t brickbytes = nrequests * 4 * sizeof(uint32_t);
@@ -330,12 +330,12 @@ main(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	printf("%zu nonzero entries in %zu-elem table.\n",
+	printf("%u nonzero entries in %u-elem table.\n",
 	       nonzeroes(htable_host, N_ht), N_ht);
 	printf("Removing entries from the HT...\n");
 	nrequests = remove_entries(htable_host, N_ht, bricks_host, nrequests,
 	                           main_brickdims);
-	printf("%zu requests left.\n", nrequests);
+	printf("%u requests left.\n", nrequests);
 
 	if(duplicates(htable_host, N_ht)) {
 		fprintf(stderr, "Something broke; duplicates!\n");

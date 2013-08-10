@@ -16,7 +16,7 @@ requests_from(const char* filename, size_t* nreqs)
 		errno = EINVAL;
 		return NULL;
 	}
-	if(fscanf(fp, "%zu\n", nreqs) != 1) {
+	if(fscanf(fp, "%u\n", nreqs) != 1) {
 		fclose(fp);
 		errno = EPROTO;
 		return NULL;
@@ -27,7 +27,7 @@ requests_from(const char* filename, size_t* nreqs)
 		                  &requests[req*4+1], &requests[req*4+2],
 		                  &requests[req*4+3]);
 		if(scan != 4) {
-			fprintf(stderr, "Error scanning request %zu(%d): %d\n",
+			fprintf(stderr, "Error scanning request %u(%d): %d\n",
 			        req, scan, errno);
 			fclose(fp);
 			free(requests);
