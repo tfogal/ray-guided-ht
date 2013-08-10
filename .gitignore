@@ -7,3 +7,11 @@ abc.log
 *.data
 bug-in-go.go
 rm
+Debug
+Release
+ipch
+*.pdb
+*.suo
+*.sdf
+*.opensdf
+*.user
