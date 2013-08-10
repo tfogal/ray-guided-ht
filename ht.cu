@@ -24,7 +24,9 @@ serialize(const uint32_t bidx[4], const unsigned bdims[4])
 /* 16384^3 volume / 32^3 voxel bricks == 512^3 bricks.  So an
  * axis-aligned ray (i.e. a thread) couldn't request more than 512
  * bricks. */
-const size_t MAX_BRICK_REQUESTS = 512;
+#ifndef MAX_BRICK_REQUESTS
+#	define MAX_BRICK_REQUESTS 512U
+#endif
 
 __constant__ unsigned brickdims[4] = {0};
 
@@ -34,7 +36,9 @@ __constant__ unsigned brickdims[4] = {0};
 __device__ static bool
 find_entry(unsigned* ht, const size_t htlen, unsigned value)
 {
+#ifndef ELEMS_TO_SEARCH
 #	define ELEMS_TO_SEARCH 4
+#endif
 	for(size_t i=0; i < ELEMS_TO_SEARCH; ++i) {
 		const unsigned idx = (value + i) % htlen;
 		if(ht[idx] == value) { return true; }
@@ -46,13 +50,16 @@ find_entry(unsigned* ht, const size_t htlen, unsigned value)
 __device__ static void
 flush(unsigned* ht, const size_t htlen, unsigned pending[16], const size_t n)
 {
+#ifndef MAX_ITERS
+#	define MAX_ITERS 10
+#endif
 	for(size_t i=0; i < n; ++i) {
 		size_t iter = 0;
 		do {
 			const unsigned hpos = (pending[i] + iter) % htlen;
 			uint32_t value = atomicCAS(&ht[hpos], 0U, pending[i]);
 			if(value == 0 || value == pending[i]) { break; }
-		} while(++iter < 10);
+		} while(++iter < MAX_ITERS);
 		/* We could atomicExch pending[i] back to 0 now.. but there's
 		 * not really a point. */
 		/* atomicExch(&pending[i], 0U); */
