@@ -37,7 +37,7 @@ __device__ static bool
 find_entry(unsigned* ht, const size_t htlen, unsigned value)
 {
 #ifndef ELEMS_TO_SEARCH
-#	define ELEMS_TO_SEARCH 4
+#	define ELEMS_TO_SEARCH 10
 #endif
 	for(size_t i=0; i < ELEMS_TO_SEARCH; ++i) {
 		const unsigned idx = (value + i) % htlen;
@@ -272,6 +272,31 @@ nonzeroes(const unsigned* ht, const size_t n_entries)
 	return count;
 }
 
+PURE static size_t
+count(unsigned value, const unsigned* ht, const size_t n_entries)
+{
+	size_t n=0;
+	for(size_t i=0; i < n_entries; ++i) {
+		if(ht[i] == value) { ++n; }
+	}
+	return n;
+}
+
+PURE bool
+duplicates(const unsigned* ht, const size_t n_entries)
+{
+	for(size_t i=0; i < n_entries; ++i) {
+		if(count(ht[i], ht, n_entries) > 1) {
+			if(verbose()) {
+				fprintf(stderr, "%u appears %zu times!\n",
+				        ht[i], count(ht[i], ht, n_entries));
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 int
 main(int argc, char* argv[])
 {
@@ -379,6 +404,11 @@ main(int argc, char* argv[])
 	nrequests = remove_entries(htable_host, N_ht, bricks_host, nrequests,
 	                           main_brickdims);
 	printf("%zu requests left.\n", nrequests);
+
+	if(duplicates(htable_host, N_ht)) {
+		fprintf(stderr, "Something broke; duplicates!\n");
+		exit(EXIT_FAILURE);
+	}
 
 	printf("Test PASSED\n");
 
