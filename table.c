@@ -64,16 +64,24 @@ remove_entries(const unsigned* entries, const size_t n_entries,
 			do {
 				size_t rem = idx_for_brick(brickID, bricks,
 				                           n_bricks);
+				if(rem == n_bricks) {
+					fprintf(stderr,
+					        "bid %u not in requests!!\n",
+					        entries[i]);
+				}
 				remove_entry(rem, bricks, n_bricks);
 				n_bricks--;
 				count++;
 			} while(idx_for_brick(brickID, bricks, n_bricks) !=
 			        n_bricks);
 			if(verbose()) {
-				printf("Removed %zu bricks for %u\n", count,
+				fprintf(stderr, "Removed %zu bricks for %u\n", count,
 				       entries[i]);
 			}
 		}
+	}
+	if(verbose()) {
+		fprintf(stderr, "Finished removing entries.\n");
 	}
 	return n_bricks;
 }
@@ -102,7 +110,7 @@ PURE bool
 duplicates(const unsigned* ht, const size_t n_entries)
 {
 	for(size_t i=0; i < n_entries; ++i) {
-		if(count(ht[i], ht, n_entries) > 1) {
+		if(ht[i] > 0 && count(ht[i], ht, n_entries) > 1) {
 			if(verbose()) {
 				fprintf(stderr, "%u appears %zu times!\n",
 				        ht[i], count(ht[i], ht, n_entries));
