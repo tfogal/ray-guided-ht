@@ -102,7 +102,7 @@ ht_inserts(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 			atomicAdd(&pidx, 1);
 		}
 	}
-	flush(ht, htlen, pending, pidx);
+	flush(ht, htlen, pending, pidx > PENDING ? PENDING : pidx);
 }
 
 __global__ void
