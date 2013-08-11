@@ -66,6 +66,12 @@ flush(unsigned* ht, const size_t htlen, unsigned pending[PENDING],
 	}
 }
 
+PURE __device__ static unsigned
+minu32(unsigned a, unsigned b)
+{
+	return a < b ? a : b;
+}
+
 
 /** @param ht the hash table
  * @param ??? the dimensions of the hash table, in shared mem
@@ -96,13 +102,13 @@ ht_inserts(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		 * we'd have to flush it. */
 		if(pidx >= PENDING) {
 			flush(ht, htlen, pending, PENDING);
-			atomicCAS(&pidx, PENDING, 0U);
+			atomicExch(&pidx, 0U);
 		} else {
-			atomicExch(&pending[pidx], serialized);
+			atomicExch(&pending[pidx % PENDING], serialized);
 			atomicAdd(&pidx, 1);
 		}
 	}
-	flush(ht, htlen, pending, pidx > PENDING ? PENDING : pidx);
+	flush(ht, htlen, pending, minu32(pidx, PENDING));
 }
 
 __global__ void
@@ -225,7 +231,9 @@ main(int argc, char* argv[])
 
 	const size_t bf = blockingfactor();
 	const dim3 blocks(bf, bf, bf);
+	size_t iterations = 0;
 	while(nrequests > 0) {
+		++iterations;
 		if(verbose()) { printf("launching kernel...\n"); }
 		if(naive()) {
 			ht_inserts_simple<<<blocks, 128>>>(htable_dev, N_ht,
@@ -254,27 +262,23 @@ main(int argc, char* argv[])
 		 * out that one. */
 		subtract1(htable_host, N_ht);
 
-		if(!requests_verify(bricks_host, nrequests, main_brickdims,
-		   NULL)) {
-			fprintf(stderr, "bogus requests.\n");
-			exit(EXIT_FAILURE);
-		}
 		if(verbose()) {
 			printf("%zu nonzero entries in %zu-elem table.\n",
 			       nonzeroes(htable_host, N_ht), N_ht);
 			printf("Removing entries from HT in %zu-elem "
 			       "request pool.\n", nrequests);
 		}
+		assert(nonzeroes(htable_host, N_ht) > 0);
+		if(duplicates(htable_host, N_ht)) {
+			fprintf(stderr, "Something broke; duplicates!\n");
+			exit(EXIT_FAILURE);
+		}
+
 		nrequests = remove_entries(htable_host, N_ht, bricks_host, nrequests,
 					   main_brickdims);
 		if(!requests_verify(bricks_host, nrequests, main_brickdims,
 		   NULL)) {
 			fprintf(stderr, "Removing entries broke table.\n");
-			exit(EXIT_FAILURE);
-		}
-
-		if(duplicates(htable_host, N_ht)) {
-			fprintf(stderr, "Something broke; duplicates!\n");
 			exit(EXIT_FAILURE);
 		}
 
@@ -297,7 +301,7 @@ main(int argc, char* argv[])
 		}
 	}
 
-	printf("Test PASSED\n");
+	printf("SUCCESS after %zu iterations.\n", iterations);
 
 	if((err = cudaFree(htable_dev)) != cudaSuccess) {
 		fprintf(stderr, "couldn't free device hash table! %s\n",
