@@ -96,7 +96,7 @@ ht_inserts(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 			atomicCAS(&pidx, PENDING, 0U);
 		} else {
 			atomicExch(&pending[pidx], serialized);
-			atomicAdd(&pidx, 1);
+			atomicInc(&pidx, pidx);
 		}
 	}
 	flush(ht, htlen, pending, pidx);
