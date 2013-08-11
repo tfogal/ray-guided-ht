@@ -42,13 +42,17 @@ find_entry(unsigned* ht, const size_t htlen, unsigned value)
 	return false;
 }
 
+#ifndef PENDING
+#	define PENDING 128U
+#endif
+#ifndef MAX_ITERS
+#	define MAX_ITERS 1
+#endif
 /* flushes all the entries from 'pending' to the hash table. */
 __device__ static void
-flush(unsigned* ht, const size_t htlen, unsigned pending[16], const size_t n)
+flush(unsigned* ht, const size_t htlen, unsigned pending[PENDING],
+      const size_t n)
 {
-#ifndef MAX_ITERS
-#	define MAX_ITERS 10
-#endif
 	for(size_t i=0; i < n; ++i) {
 		size_t iter = 0;
 		do {
@@ -63,7 +67,6 @@ flush(unsigned* ht, const size_t htlen, unsigned pending[16], const size_t n)
 }
 
 
-#define PENDING 128U
 /** @param ht the hash table
  * @param ??? the dimensions of the hash table, in shared mem
  * @param list of bricks to access.  this is 4-components! (x,y,z, LOD) */
@@ -111,13 +114,12 @@ ht_inserts_simple(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		                      i) % nbricks;
 		unsigned serialized = serialize(&bricks[bid*4], brickdims);
 
-		unsigned rehash_count = 0;
+		unsigned iter = 0;
 		do {
-			const unsigned hpos = (serialized + rehash_count) %
-			                       htlen;
+			const unsigned hpos = (serialized + iter) % htlen;
 			unsigned val = atomicCAS(&ht[hpos], 0U, serialized);
 			if(val == 0 || val == serialized) { break; }
-		} while(++rehash_count < 10);
+		} while(++iter < MAX_ITERS);
 	}
 }
 
@@ -201,10 +203,11 @@ main(int argc, char* argv[])
 		fprintf(stderr, "Brick request %zu is garbage.\n", fault);
 		exit(EXIT_FAILURE);
 	}
+
+	/* each brick request is 16 bytes: 4 unsigned numbers (X,Y,Z,LOD) */
 	const size_t brickbytes = nrequests * 4 * sizeof(uint32_t);
 
 	uint32_t* bricks_dev;
-	/* each brick request is 16 bytes: 4 unsigned numbers (X,Y,Z,LOD) */
 	err = cudaMalloc(&bricks_dev, brickbytes);
 	if(err != cudaSuccess) {
 		fprintf(stderr, "cuda alloc error for bricks (dev): %s\n",
@@ -221,9 +224,7 @@ main(int argc, char* argv[])
 	}
 
 	const size_t bf = blockingfactor();
-	const size_t bdims[] = { main_brickdims[0], main_brickdims[1],
-	                         main_brickdims[2] };
-	const dim3 blocks(bdims[0]/bf, bdims[1]/bf, bdims[2]/bf);
+	const dim3 blocks(bf, bf, bf);
 	while(nrequests > 0) {
 		if(verbose()) { printf("launching kernel...\n"); }
 		if(naive()) {
@@ -249,14 +250,28 @@ main(int argc, char* argv[])
 				cudaGetErrorString(err));
 			exit(EXIT_FAILURE);
 		}
+		/* we added 1 to each entry when they went in the HT: subtract
+		 * out that one. */
+		subtract1(htable_host, N_ht);
 
-		printf("%zu nonzero entries in %zu-elem table.\n",
-		       nonzeroes(htable_host, N_ht), N_ht);
-		printf("Removing entries from HT in %zu-elem request pool.\n",
-		       nrequests);
+		if(!requests_verify(bricks_host, nrequests, main_brickdims,
+		   NULL)) {
+			fprintf(stderr, "bogus requests.\n");
+			exit(EXIT_FAILURE);
+		}
+		if(verbose()) {
+			printf("%zu nonzero entries in %zu-elem table.\n",
+			       nonzeroes(htable_host, N_ht), N_ht);
+			printf("Removing entries from HT in %zu-elem "
+			       "request pool.\n", nrequests);
+		}
 		nrequests = remove_entries(htable_host, N_ht, bricks_host, nrequests,
 					   main_brickdims);
-		printf("%zu requests left.\n", nrequests);
+		if(!requests_verify(bricks_host, nrequests, main_brickdims,
+		   NULL)) {
+			fprintf(stderr, "Removing entries broke table.\n");
+			exit(EXIT_FAILURE);
+		}
 
 		if(duplicates(htable_host, N_ht)) {
 			fprintf(stderr, "Something broke; duplicates!\n");

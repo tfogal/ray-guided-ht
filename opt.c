@@ -55,7 +55,7 @@ argparse(int argc, char* argv[])
 		exit(EXIT_FAILURE);
 	}
 	const size_t nbricks = (size_t)bricks[0]*bricks[1]*bricks[2]*n_lod;
-	if(nbricks < ht_size) {
+	if(nbricks < (size_t)ht_size) {
 		g_warning("more hash table entries (%d) than bricks (%zu)!",
 		          ht_size, nbricks);
 	}

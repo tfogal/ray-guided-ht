@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <stdio.h>
+#include "compiler.h"
 #include "requests.h"
 
 /** reads requests from the given filename.
@@ -39,6 +40,13 @@ requests_from(const char* filename, size_t* nreqs)
 	return requests;
 }
 
+PURE static uint32_t
+serialize(const uint32_t bidx[4], const unsigned bdims[4])
+{
+	return bidx[0] + bidx[1]*bdims[0] + bidx[2]*bdims[0]*bdims[1] +
+	       bidx[3]*bdims[0]*bdims[1]*bdims[2];
+}
+
 /* are the given requests valid?  they need to fall within brick indices.
  * @param requests the requests the examine
  * @param nreq number of requests; 'requests' is 4*nreq elems long.
@@ -62,4 +70,56 @@ requests_verify(const uint32_t* requests, const size_t nreq,
 		}
 	}
 	return true;
+}
+
+size_t
+idx_of(const uint32_t* requests, const size_t nreq, const unsigned val,
+       const unsigned bdims[4])
+{
+	size_t idx=nreq;
+	for(size_t r=0; r < nreq; ++r) {
+		const unsigned value = serialize(&requests[r*4], bdims);
+		if(value == val) {
+			printf("%u is at %zu\n", val, r);
+			idx = r;
+		}
+	}
+	return idx;
+}
+
+/* removes index 'idx' from the given brick list. */
+static void
+remove_entry(size_t idx, unsigned* bricks, const size_t n_bricks)
+{
+	for(size_t i=idx; i < n_bricks-1; ++i) {
+		bricks[i*4+0] = bricks[(i+1)*4+0];
+		bricks[i*4+1] = bricks[(i+1)*4+1];
+		bricks[i*4+2] = bricks[(i+1)*4+2];
+		bricks[i*4+3] = bricks[(i+1)*4+3];
+	}
+}
+
+/** removes all entries from the request table which serialize to the given
+ * value.
+ * @param[in] serized the serialized value to be removed
+ * @param[inout] bricks the table of bricks to modify
+ * @param[in] n_bricks the number of bricks in the given table.
+ * @return the new/updated number of bricks in the table */
+size_t
+remove_all(unsigned serized, unsigned* bricks, size_t n_bricks,
+           const unsigned bdims[4])
+{
+	bool converged;
+	do {
+		converged = true;
+		for(size_t i=0; i < n_bricks; ++i) {
+			if(serialize(&bricks[i*4], bdims) == serized) {
+				remove_entry(i, bricks, n_bricks);
+				n_bricks--;
+				converged = false;
+				break;
+			}
+		}
+	} while(!converged);
+	return n_bricks;
 }

@@ -23,6 +23,20 @@ extern uint32_t* requests_from(const char* filename, size_t* nreqs);
 extern bool requests_verify(const uint32_t* requests, const size_t nreq,
                             const unsigned bdims[4], size_t* erridx);
 
+size_t
+idx_of(const uint32_t* requests, const size_t nreq, const unsigned val,
+       const unsigned bdims[4]);
+
+/** removes all entries from the request table which serialize to the given
+ * value.
+ * @param[in] serized the serialized value to be removed
+ * @param[inout] bricks the table of bricks to modify
+ * @param[in] n_bricks the number of bricks in the given table.
+ * @return the new/updated number of bricks in the table */
+size_t
+remove_all(unsigned serized, unsigned* bricks, size_t n_bricks,
+           const unsigned bdims[4]);
+
 #ifdef __cplusplus
 }
 #endif

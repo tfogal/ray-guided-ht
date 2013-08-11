@@ -21,11 +21,19 @@ remove_entries(const unsigned* entries, const size_t n_entries,
                unsigned* bricks, size_t n_bricks,
                const unsigned bdims[4]);
 
-extern PURE size_t
+PURE extern size_t
 nonzeroes(const unsigned* ht, const size_t n_entries);
 
 PURE extern bool
 duplicates(const unsigned* ht, const size_t n_entries);
+
+/** to distinguish between empty elements and ones for a specific brick, the
+ * serialization during insertion adds one.  This removes that +1 so that the
+ * indices are again valid.
+ * @param[inout] ht the hash table to fix
+ * @param[in] n_entries number of valid indices in the hash table. */
+extern void
+subtract1(unsigned* ht, const size_t n_entries);
 
 #ifdef __cplusplus
 }

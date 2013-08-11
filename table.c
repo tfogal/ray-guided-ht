@@ -1,40 +1,15 @@
+#include <assert.h>
 #include <stdio.h>
 #include "compiler.h"
 #include "opt.h"
+#include "requests.h"
 #include "table.h"
 
-/* removes index 'idx' from the given brick list. */
-PURE static void
-remove_entry(size_t idx, unsigned* bricks, const size_t n_bricks)
-{
-	for(size_t i=idx; i < n_bricks-1; ++i) {
-		bricks[i*4+0] = bricks[(i+1)*4+0];
-		bricks[i*4+1] = bricks[(i+1)*4+1];
-		bricks[i*4+2] = bricks[(i+1)*4+2];
-		bricks[i*4+3] = bricks[(i+1)*4+3];
-	}
-}
-
-/** returns the index into 'bricks' where 'brickID' lies.  returns n_bricks if
- * the entry was not found. */
-PURE static size_t
-idx_for_brick(const unsigned brickID[4], const unsigned* bricks, const size_t n_bricks)
-{
-	for(size_t i=0; i < n_bricks; ++i) {
-		if(brickID[0] == bricks[i*4+0] &&
-		   brickID[1] == bricks[i*4+1] &&
-		   brickID[2] == bricks[i*4+2] &&
-		   brickID[3] == bricks[i*4+3]) {
-			return i;
-		}
-	}
-	return n_bricks;
-}
-
+#if 0
 /** @param idx1 the 1D index of the brick (what got stored in the HT)
  * @param[out] bid output.  the corresponding 4D index from 'idx1'.
  * @param[in] bdims the number of bricks in each dimension */
-void
+static void
 to4d(const unsigned idx1, unsigned bid[4], const unsigned bdims[4])
 {
 	bid[0] = idx1 % bdims[0];
@@ -42,7 +17,18 @@ to4d(const unsigned idx1, unsigned bid[4], const unsigned bdims[4])
 	bid[2] = (idx1 / (bdims[0]*bdims[1])) % bdims[2];
 	/* One really doesn't need the mod operation in the last elem.. */
 	bid[3] = (idx1 / (bdims[0]*bdims[1]*bdims[2])) % bdims[3];
+	if(serialize(bid, bdims) != idx1) {
+		printf("dims: {%u,%u,%u,%u}\n",
+		       bdims[0],bdims[1],bdims[2],bdims[3]);
+		printf("div %u: %u\n", bdims[0], bid[1]);
+		printf("%u x %u: %u\n", bdims[0], bdims[1], bdims[0]*bdims[1]);
+		printf("%u serializes to [%u,%u,%u,%u] and back to %u!\n",
+		       idx1, bid[0],bid[1],bid[2],bid[3],
+		       serialize(bid,bdims));
+	}
+	assert(serialize(bid, bdims) == idx1);
 }
+#endif
 
 /** removes a set of HT entries from the given bricktable.
  * @param entries the entries.  note these are 1D (collapsed) indices.
@@ -58,26 +44,8 @@ remove_entries(const unsigned* entries, const size_t n_entries,
 {
 	for(size_t i=0; i < n_entries; ++i) {
 		if(entries[i] > 0) {
-			size_t count = 0;
-                        unsigned brickID[4];
-                        to4d(entries[i], brickID, bdims);
-			do {
-				size_t rem = idx_for_brick(brickID, bricks,
-				                           n_bricks);
-				if(rem == n_bricks) {
-					fprintf(stderr,
-					        "bid %u not in requests!!\n",
-					        entries[i]);
-				}
-				remove_entry(rem, bricks, n_bricks);
-				n_bricks--;
-				count++;
-			} while(idx_for_brick(brickID, bricks, n_bricks) !=
-			        n_bricks);
-			if(verbose()) {
-				fprintf(stderr, "Removed %zu bricks for %u\n", count,
-				       entries[i]);
-			}
+			n_bricks = remove_all(entries[i], bricks, n_bricks,
+			                      bdims);
 		}
 	}
 	if(verbose()) {
@@ -119,4 +87,19 @@ duplicates(const unsigned* ht, const size_t n_entries)
 		}
 	}
 	return false;
+}
+
+/** to distinguish between empty elements and ones for a specific brick, the
+ * serialization during insertion adds one.  This removes that +1 so that the
+ * indices are again valid.
+ * @param[inout] ht the hash table to fix
+ * @param[in] n_entries number of valid indices in the hash table. */
+void
+subtract1(unsigned* ht, const size_t n_entries)
+{
+	for(size_t i=0; i < n_entries; ++i) {
+		if(ht[i] > 0) {
+			ht[i]--;
+		}
+	}
 }

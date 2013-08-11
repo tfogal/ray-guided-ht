@@ -6,16 +6,16 @@ export COMPUTE_PROFILE=1
 export COMPUTE_PROFILE_LOG=./.ht.log
 export NAIVE="ht-size-naive.data"
 export STAGING="ht-size-staging.data"
-export MAX_SIZE=200
+export MAX_SIZE=5000
 echo "# ht-size GPU-Time Occupancy" > ${NAIVE}
 echo "# ht-size GPU-Time Occupancy" > ${STAGING}
-for htsize in $(seq 25 1 ${MAX_SIZE}) ; do
+for htsize in $(seq 30 ${MAX_SIZE}) ; do
 	# There seems to be an issue with the first run; I guess it takes a sec
 	# for the GPU to get into "CUDA mode".  So run once unrecorded, to
 	# prime CUDA.
 	${hsh} -n -h ${htsize} &>/dev/null
 	${hsh} -h ${htsize} &>/dev/null
-	for i in 1 2 3 4 5; do
+	for i in 1 2 3 ; do
 		# make sure we don't get nonsense.
 		rm -f ${COMPUTE_PROFILE_LOG}
                 ${hsh} -n -h ${htsize} &>/dev/null
