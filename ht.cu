@@ -33,7 +33,7 @@ __device__ static bool
 find_entry(unsigned* ht, const size_t htlen, unsigned value)
 {
 #ifndef ELEMS_TO_SEARCH
-#	define ELEMS_TO_SEARCH 10
+#	define ELEMS_TO_SEARCH 3
 #endif
 	for(size_t i=0; i < ELEMS_TO_SEARCH; ++i) {
 		const unsigned idx = (value + i) % htlen;
@@ -43,10 +43,10 @@ find_entry(unsigned* ht, const size_t htlen, unsigned value)
 }
 
 #ifndef PENDING
-#	define PENDING 128U
+#	define PENDING 1U
 #endif
 #ifndef MAX_ITERS
-#	define MAX_ITERS 1
+#	define MAX_ITERS ELEMS_TO_SEARCH + 8
 #endif
 /* flushes all the entries from 'pending' to the hash table. */
 __device__ static void
@@ -87,7 +87,6 @@ ht_inserts(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 	/* __shared__ vars can't have initializers; do it manually. */
 	for(size_t i=0; i < PENDING; i++) { pending[i] = 0; }
 	pidx = 0;
-	__syncthreads();
 
 	for(size_t i=0; i < MAX_BRICK_REQUESTS; ++i) {
 		const unsigned bid = ((threadIdx.x + blockDim.x*blockDim.y) +
