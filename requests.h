@@ -33,9 +33,12 @@ idx_of(const uint32_t* requests, const size_t nreq, const unsigned val,
  * @param[inout] bricks the table of bricks to modify
  * @param[in] n_bricks the number of bricks in the given table.
  * @return the new/updated number of bricks in the table */
-size_t
+extern size_t
 remove_all(unsigned serized, unsigned* bricks, size_t n_bricks,
            const unsigned bdims[4]);
+
+extern void
+write_requests(const char* file, const unsigned* bricks, size_t n_bricks);
 
 #ifdef __cplusplus
 }

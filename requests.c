@@ -123,3 +123,20 @@ remove_all(unsigned serized, unsigned* bricks, size_t n_bricks,
 	} while(!converged);
 	return n_bricks;
 }
+
+void
+write_requests(const char* file, const unsigned* bricks, size_t n_bricks)
+{
+	FILE* fp = fopen(file, "w+");
+	if(!fp) {
+		fprintf(stderr, "Error creating '%s'\n", file);
+		return;
+	}
+	fprintf(fp, "%zu\n", n_bricks);
+	for(size_t i=0; i < n_bricks; ++i) {
+		fprintf(fp, "%u %u %u %u\n",
+		        bricks[i*4+0], bricks[i*4+1],
+		        bricks[i*4+2], bricks[i*4+3]);
+	}
+	fclose(fp);
+}
