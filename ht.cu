@@ -42,9 +42,6 @@ find_entry(unsigned* ht, const size_t htlen, unsigned value)
 	return false;
 }
 
-#ifndef PENDING
-#	define PENDING 1U
-#endif
 #ifndef MAX_ITERS
 #	define MAX_ITERS ELEMS_TO_SEARCH + 8
 #endif
@@ -60,6 +57,9 @@ flush_elem(unsigned* ht, const size_t htlen, unsigned elem)
 	} while(++iter < MAX_ITERS);
 }
 
+#ifndef PENDING
+#	define PENDING 1U
+#endif
 /* flushes all the entries from 'pending' to the hash table. */
 __device__ static void
 flush(unsigned* ht, const size_t htlen, const unsigned pending[PENDING],
@@ -78,7 +78,6 @@ minu32(unsigned a, unsigned b)
 {
 	return a < b ? a : b;
 }
-
 
 /** @param ht the hash table
  * @param ??? the dimensions of the hash table, in shared mem
@@ -123,13 +122,13 @@ ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 {
 	/* if NUMTHREADS is smaller than the number of threads which use the
 	 * same __shared__ memory, all of this is broken. */
-#define NUMTHREADS 192U
+#define NUMTHREADS 512U
 #define NUMLOCAL 4U
 	/* shared memory for writes which should get added to 'ht'. */
 	__shared__ unsigned pending[NUMTHREADS*NUMLOCAL];
 	__shared__ unsigned pidx[NUMTHREADS];
 
-	const size_t base = threadIdx.x*NUMLOCAL; /* this threads 'pending' loc */
+	const size_t base = threadIdx.x*NUMLOCAL; /* this threads 'pending' */
 
 	/* __shared__ vars can't have initializers; do it manually. */
 	for(size_t i=0; i < NUMLOCAL; ++i) { pending[base+i] = 0; }
@@ -140,7 +139,8 @@ ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		                      i) % nbricks;
 		unsigned serialized = serialize(&bricks[bid*4], brickdims);
 
-		/* Is it already in the table?  then move on. */
+		/* Is it already in the table?  then these aren't the bricks
+		 * we're locking[sic] for.. We can go about our business. */
 		if(find_entry(ht, htlen, serialized)) { continue; }
 
 		/* Otherwise, add it to our list of pending writes into the
@@ -154,9 +154,7 @@ ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		pending[elem] = serialized;
 		pidx[base]++;
 	}
-	if(pidx[base] > 0) {
-		flush(ht, htlen, &pending[base], pidx[base]);
-	}
+	flush(ht, htlen, &pending[base], pidx[base]);
 }
 
 __global__ void
@@ -282,6 +280,10 @@ main(int argc, char* argv[])
 			ht_inserts_simple<<<blocks, 128>>>(htable_dev, N_ht,
 			                                   bricks_dev,
 							   nrequests);
+		} else if(nosync()) {
+			ht_inserts_nosync<<<blocks, 128>>>(htable_dev, N_ht,
+			                                   bricks_dev,
+			                                   nrequests);
 		} else {
 			ht_inserts<<<blocks, 128>>>(htable_dev, N_ht,
 			                            bricks_dev, nrequests);

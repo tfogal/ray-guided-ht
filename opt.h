@@ -15,8 +15,9 @@ size_t bricksZ();
 size_t LODs();
 const char* requestfile();
 size_t blockingfactor();
-bool naive();
+bool naive(); /* use 'naive' algorithm */
 bool verbose();
+bool nosync(); /* use 'nosync' algorithm */
 
 #ifdef __cplusplus
 }

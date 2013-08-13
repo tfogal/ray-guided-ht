@@ -10,6 +10,7 @@ static gchar* requestf; /* where to read requests from */
 static gint blockfactor;
 static bool ht_naive;
 static bool is_verbose;
+static bool ht_nosync;
 static GOptionEntry options[] = {
 	{"debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Debug mode", NULL},
 	{"hashsz", 'h', 0, G_OPTION_ARG_INT, &ht_size, "HT size in X", NULL},
@@ -25,6 +26,8 @@ static GOptionEntry options[] = {
 	 "use naive hash table algorithm (clone of IV3D's GLSL)", NULL},
 	{"verbose", 'v', false, G_OPTION_ARG_NONE, &is_verbose,
 	 "enable chatty/annoying output.", NULL},
+	{"sync", 's', false, G_OPTION_ARG_NONE, &ht_nosync,
+	 "use nosync (in shared mem) algorithm", NULL},
 	{ NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -70,3 +73,4 @@ const char* requestfile() { return (const char*)requestf; }
 size_t blockingfactor() { return (size_t)blockfactor; }
 bool naive() { return ht_naive; }
 bool verbose() { return is_verbose; }
+bool nosync() { return ht_nosync; }
