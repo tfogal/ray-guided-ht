@@ -48,18 +48,25 @@ find_entry(unsigned* ht, const size_t htlen, unsigned value)
 #ifndef MAX_ITERS
 #	define MAX_ITERS ELEMS_TO_SEARCH + 8
 #endif
+
+__device__ static void
+flush_elem(unsigned* ht, const size_t htlen, unsigned elem)
+{
+	size_t iter = 0;
+	do {
+		const unsigned hpos = (elem + iter) % htlen;
+		const unsigned value = atomicCAS(&ht[hpos], 0U, elem);
+		if(value == 0 || value == elem) { break; }
+	} while(++iter < MAX_ITERS);
+}
+
 /* flushes all the entries from 'pending' to the hash table. */
 __device__ static void
-flush(unsigned* ht, const size_t htlen, unsigned pending[PENDING],
+flush(unsigned* ht, const size_t htlen, const unsigned pending[PENDING],
       const size_t n)
 {
 	for(size_t i=0; i < n; ++i) {
-		size_t iter = 0;
-		do {
-			const unsigned hpos = (pending[i] + iter) % htlen;
-			uint32_t value = atomicCAS(&ht[hpos], 0U, pending[i]);
-			if(value == 0 || value == pending[i]) { break; }
-		} while(++iter < MAX_ITERS);
+		flush_elem(ht, htlen, pending[i]);
 		/* We could atomicExch pending[i] back to 0 now.. but there's
 		 * not really a point. */
 		/* atomicExch(&pending[i], 0U); */
@@ -111,6 +118,48 @@ ht_inserts(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 }
 
 __global__ void
+ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
+                  const size_t nbricks)
+{
+	/* if NUMTHREADS is smaller than the number of threads which use the
+	 * same __shared__ memory, all of this is broken. */
+#define NUMTHREADS 192U
+#define NUMLOCAL 4U
+	/* shared memory for writes which should get added to 'ht'. */
+	__shared__ unsigned pending[NUMTHREADS*NUMLOCAL];
+	__shared__ unsigned pidx[NUMTHREADS];
+
+	const size_t base = threadIdx.x*NUMLOCAL; /* this threads 'pending' loc */
+
+	/* __shared__ vars can't have initializers; do it manually. */
+	for(size_t i=0; i < NUMLOCAL; ++i) { pending[base+i] = 0; }
+	pidx[base] = 0;
+
+	for(size_t i=0; i < MAX_BRICK_REQUESTS; ++i) {
+		const unsigned bid = ((threadIdx.x + blockDim.x*blockDim.y) +
+		                      i) % nbricks;
+		unsigned serialized = serialize(&bricks[bid*4], brickdims);
+
+		/* Is it already in the table?  then move on. */
+		if(find_entry(ht, htlen, serialized)) { continue; }
+
+		/* Otherwise, add it to our list of pending writes into the
+		 * table.  But, that might cause it to overflow, which means
+		 * we'd have to flush it. */
+		if(pidx[base] >= NUMLOCAL) {
+			flush(ht, htlen, &pending[base], NUMLOCAL);
+			pidx[base] = 0U;
+		}
+		const size_t elem = base + pidx[base];
+		pending[elem] = serialized;
+		pidx[base]++;
+	}
+	if(pidx[base] > 0) {
+		flush(ht, htlen, &pending[base], pidx[base]);
+	}
+}
+
+__global__ void
 ht_inserts_simple(unsigned* ht, const size_t htlen, const uint32_t* bricks,
                   const size_t nbricks)
 {
@@ -119,12 +168,7 @@ ht_inserts_simple(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		                      i) % nbricks;
 		unsigned serialized = serialize(&bricks[bid*4], brickdims);
 
-		unsigned iter = 0;
-		do {
-			const unsigned hpos = (serialized + iter) % htlen;
-			unsigned val = atomicCAS(&ht[hpos], 0U, serialized);
-			if(val == 0 || val == serialized) { break; }
-		} while(++iter < MAX_ITERS);
+		flush_elem(ht, htlen, serialized);
 	}
 }
 
