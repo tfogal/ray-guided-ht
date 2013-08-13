@@ -140,3 +140,24 @@ write_requests(const char* file, const unsigned* bricks, size_t n_bricks)
 	}
 	fclose(fp);
 }
+
+/** creates duplicates of brick requests, increasing the list size.
+ * @param[in] bricks the previous/existing brick requests
+ * @param[inout] the number of bricks in the incoming list; modified to be the
+ *               number of bricks in the outgoing list.
+ * @returns the new list. */
+MALLOC unsigned*
+increase_requests(const unsigned* bricks, size_t* n_bricks)
+{
+	size_t new_bricks = (*n_bricks)*16;
+	unsigned* bnew = malloc(sizeof(unsigned)*4*new_bricks);
+	for(size_t i=0; i < new_bricks; ++i) {
+		size_t idx = i % (*n_bricks);
+		bnew[i*4+0] = bricks[idx*4+0];
+		bnew[i*4+1] = bricks[idx*4+1];
+		bnew[i*4+2] = bricks[idx*4+2];
+		bnew[i*4+3] = bricks[idx*4+3];
+	}
+	*n_bricks = new_bricks;
+	return bnew;
+}

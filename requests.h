@@ -40,6 +40,14 @@ remove_all(unsigned serized, unsigned* bricks, size_t n_bricks,
 extern void
 write_requests(const char* file, const unsigned* bricks, size_t n_bricks);
 
+/** creates duplicates of brick requests, increasing the list size.
+ * @param[in] bricks the previous/existing brick requests
+ * @param[inout] the number of bricks in the incoming list; modified to be the
+ *               number of bricks in the outgoing list.
+ * @returns the new list. */
+extern MALLOC unsigned*
+increase_requests(const unsigned* bricks, size_t* n_bricks);
+
 #ifdef __cplusplus
 }
 #endif
