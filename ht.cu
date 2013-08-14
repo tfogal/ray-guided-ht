@@ -123,17 +123,13 @@ ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 {
 	/* if NUMTHREADS is smaller than the number of threads which use the
 	 * same __shared__ memory, all of this is broken. */
-#define NUMTHREADS 256U
-#define NUMLOCAL 2U
-	/* shared memory for writes which should get added to 'ht'. */
-	__shared__ unsigned pending[NUMTHREADS*NUMLOCAL];
-	__shared__ unsigned pidx[NUMTHREADS];
-
-	const size_t base = threadIdx.x*NUMLOCAL; /* this thread's 'pending' */
+#define NUMLOCAL 16U
+	unsigned pending[NUMLOCAL];
+	unsigned pidx;
 
 	/* __shared__ vars can't have initializers; do it manually. */
-	for(size_t i=0; i < NUMLOCAL; ++i) { pending[base+i] = 0; }
-	pidx[base] = 0;
+	for(size_t i=0; i < NUMLOCAL; ++i) { pending[i] = 0; }
+	pidx = 0;
 
 	for(size_t i=0; i < MAX_BRICK_REQUESTS; ++i) {
 		const unsigned bid = ((threadIdx.x + blockDim.x*blockDim.y) +
@@ -143,15 +139,14 @@ ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		/* Otherwise, add it to our list of pending writes into the
 		 * table.  But, that might cause it to overflow, which means
 		 * we'd have to flush it. */
-		if(pidx[base] == NUMLOCAL) {
-			flush(ht, htlen, &pending[base], NUMLOCAL);
-			pidx[base] = 0U;
+		if(pidx == NUMLOCAL) {
+			flush(ht, htlen, pending, NUMLOCAL);
+			pidx = 0U;
 		}
-		const size_t elem = base + pidx[base];
-		assert(elem < NUMTHREADS*NUMLOCAL);
-		pending[elem] = serialized;
-		pidx[base]++;
+		pending[pidx] = serialized;
+		pidx++;
 	}
+	flush(ht, htlen, pending, pidx);
 }
 
 __global__ void
