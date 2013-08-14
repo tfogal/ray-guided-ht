@@ -275,7 +275,6 @@ main(int argc, char* argv[])
 	size_t iterations = 0;
 	while(nrequests > 0) {
 		++iterations;
-		if(verbose()) { printf("launching kernel...\n"); }
 		if(naive()) {
 			ht_inserts_simple<<<blocks, 128>>>(htable_dev, N_ht,
 			                                   bricks_dev,
@@ -308,10 +307,9 @@ main(int argc, char* argv[])
 		subtract1(htable_host, N_ht);
 
 		if(verbose()) {
-			printf("%zu nonzero entries in %zu-elem table.\n",
-			       nonzeroes(htable_host, N_ht), N_ht);
-			printf("Removing entries from HT in %zu-elem "
-			       "request pool.\n", nrequests);
+			printf("Removing %zu HT entries from %zu-elem "
+			       "request pool.\n", nonzeroes(htable_host, N_ht),
+			       nrequests);
 		}
 		assert(nonzeroes(htable_host, N_ht) > 0);
 		if(duplicates(htable_host, N_ht)) {

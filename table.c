@@ -48,9 +48,6 @@ remove_entries(const unsigned* entries, const size_t n_entries,
 			                      bdims);
 		}
 	}
-	if(verbose()) {
-		fprintf(stderr, "Finished removing entries.\n");
-	}
 	return n_bricks;
 }
 
