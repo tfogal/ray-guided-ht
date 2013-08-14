@@ -33,7 +33,7 @@ __device__ static bool
 find_entry(unsigned* ht, const size_t htlen, unsigned value)
 {
 #ifndef ELEMS_TO_SEARCH
-#	define ELEMS_TO_SEARCH 3
+#	define ELEMS_TO_SEARCH 1
 #endif
 	for(size_t i=0; i < ELEMS_TO_SEARCH; ++i) {
 		const unsigned idx = (value + i) % htlen;
@@ -99,7 +99,8 @@ ht_inserts(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		                      i) % nbricks;
 		unsigned serialized = serialize(&bricks[bid*4], brickdims);
 
-		/* Is it already in the table?  then move on. */
+		/* Is it already in the table?  then these aren't the bricks
+		 * we're locking[sic] for.. We can go about our business. */
 		if(find_entry(ht, htlen, serialized)) { continue; }
 
 		/* Otherwise, add it to our list of pending writes into the
@@ -122,13 +123,13 @@ ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 {
 	/* if NUMTHREADS is smaller than the number of threads which use the
 	 * same __shared__ memory, all of this is broken. */
-#define NUMTHREADS 512U
-#define NUMLOCAL 4U
+#define NUMTHREADS 256U
+#define NUMLOCAL 2U
 	/* shared memory for writes which should get added to 'ht'. */
 	__shared__ unsigned pending[NUMTHREADS*NUMLOCAL];
 	__shared__ unsigned pidx[NUMTHREADS];
 
-	const size_t base = threadIdx.x*NUMLOCAL; /* this threads 'pending' */
+	const size_t base = threadIdx.x*NUMLOCAL; /* this thread's 'pending' */
 
 	/* __shared__ vars can't have initializers; do it manually. */
 	for(size_t i=0; i < NUMLOCAL; ++i) { pending[base+i] = 0; }
@@ -139,22 +140,18 @@ ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		                      i) % nbricks;
 		unsigned serialized = serialize(&bricks[bid*4], brickdims);
 
-		/* Is it already in the table?  then these aren't the bricks
-		 * we're locking[sic] for.. We can go about our business. */
-		if(find_entry(ht, htlen, serialized)) { continue; }
-
 		/* Otherwise, add it to our list of pending writes into the
 		 * table.  But, that might cause it to overflow, which means
 		 * we'd have to flush it. */
-		if(pidx[base] >= NUMLOCAL) {
+		if(pidx[base] == NUMLOCAL) {
 			flush(ht, htlen, &pending[base], NUMLOCAL);
 			pidx[base] = 0U;
 		}
 		const size_t elem = base + pidx[base];
+		assert(elem < NUMTHREADS*NUMLOCAL);
 		pending[elem] = serialized;
 		pidx[base]++;
 	}
-	flush(ht, htlen, &pending[base], pidx[base]);
 }
 
 __global__ void
