@@ -8,7 +8,7 @@
  * @param[out] nreqs the number of requests in the array; note the array
  *             then has 4*requests elements, since each requests is 4
  *             entries. */
-uint32_t*
+MALLOC uint32_t*
 requests_from(const char* filename, size_t* nreqs)
 {
 	*nreqs = 0;
@@ -40,6 +40,7 @@ requests_from(const char* filename, size_t* nreqs)
 	return requests;
 }
 
+/** converts a 4D index to a 1D index. */
 PURE static uint32_t
 serialize(const uint32_t bidx[4], const unsigned bdims[4])
 {
@@ -52,7 +53,7 @@ serialize(const uint32_t bidx[4], const unsigned bdims[4])
  * @param nreq number of requests; 'requests' is 4*nreq elems long.
  * @param bdims the brick dimensions.
  * @param[out] erridx if nonnull, the request which was in error. */
-bool
+PURE bool
 requests_verify(const uint32_t* requests, const size_t nreq,
                 const unsigned bdims[4], size_t* erridx)
 {
@@ -70,21 +71,6 @@ requests_verify(const uint32_t* requests, const size_t nreq,
 		}
 	}
 	return true;
-}
-
-size_t
-idx_of(const uint32_t* requests, const size_t nreq, const unsigned val,
-       const unsigned bdims[4])
-{
-	size_t idx=nreq;
-	for(size_t r=0; r < nreq; ++r) {
-		const unsigned value = serialize(&requests[r*4], bdims);
-		if(value == val) {
-			printf("%u is at %zu\n", val, r);
-			idx = r;
-		}
-	}
-	return idx;
 }
 
 /* removes index 'idx' from the given brick list. */
@@ -124,6 +110,7 @@ remove_all(unsigned serized, unsigned* bricks, size_t n_bricks,
 	return n_bricks;
 }
 
+/** writes the given brick requests to a file. */
 void
 write_requests(const char* file, const unsigned* bricks, size_t n_bricks)
 {

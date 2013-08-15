@@ -51,6 +51,7 @@ remove_entries(const unsigned* entries, const size_t n_entries,
 	return n_bricks;
 }
 
+/** @returns the number of nonzero entries in the array. */
 PURE size_t
 nonzeroes(const unsigned* ht, const size_t n_entries)
 {
@@ -61,6 +62,7 @@ nonzeroes(const unsigned* ht, const size_t n_entries)
 	return count;
 }
 
+/** @returns the number of entries which are equal to 'value'. */
 PURE static size_t
 count(unsigned value, const unsigned* ht, const size_t n_entries)
 {
@@ -71,6 +73,7 @@ count(unsigned value, const unsigned* ht, const size_t n_entries)
 	return n;
 }
 
+/** @returns true if the array contains any value more than once. */
 PURE bool
 duplicates(const unsigned* ht, const size_t n_entries)
 {
