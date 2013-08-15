@@ -121,15 +121,9 @@ __global__ void
 ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
                   const size_t nbricks)
 {
-	/* if NUMTHREADS is smaller than the number of threads which use the
-	 * same __shared__ memory, all of this is broken. */
-#define NUMLOCAL 16U
-	unsigned pending[NUMLOCAL];
-	unsigned pidx;
-
-	/* __shared__ vars can't have initializers; do it manually. */
-	for(size_t i=0; i < NUMLOCAL; ++i) { pending[i] = 0; }
-	pidx = 0;
+#define NUMLOCAL 1U
+	unsigned pending[NUMLOCAL] = {0};
+	unsigned pidx = 0;
 
 	for(size_t i=0; i < MAX_BRICK_REQUESTS; ++i) {
 		const unsigned bid = ((threadIdx.x + blockDim.x*blockDim.y) +
