@@ -141,6 +141,29 @@ ht_inserts_nosync(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		pidx++;
 	}
 	flush(ht, htlen, pending, pidx);
+#undef NUMLOCAL
+}
+
+/* 'lazy' algorithm: if it fills up its local table, then it just gives up and
+ * refuses to insert any more bricks. */
+__global__ void
+ht_inserts_nosync_lazy(unsigned* ht, const size_t htlen, const uint32_t* bricks,
+                       const size_t nbricks)
+{
+#define LAZYBUF 128U
+	unsigned pending[LAZYBUF] = {0};
+	unsigned pidx = 0;
+
+	for(size_t i=0; i < MAX_BRICK_REQUESTS; ++i) {
+		const unsigned bid = ((threadIdx.x + blockDim.x*blockDim.y) +
+		                      i) % nbricks;
+		unsigned serialized = serialize(&bricks[bid*4], brickdims);
+
+    if(pidx == LAZYBUF) { break; }
+		pending[pidx] = serialized;
+		pidx++;
+	}
+	flush(ht, htlen, pending, pidx);
 }
 
 __global__ void
@@ -269,7 +292,10 @@ main(int argc, char* argv[])
 			ht_inserts_nosync<<<blocks, 128>>>(htable_dev, N_ht,
 			                                   bricks_dev,
 			                                   nrequests);
-		} else {
+		} else if(nosync_lazy()) {
+      ht_inserts_nosync_lazy<<<blocks, 128>>>(htable_dev, N_ht, bricks_dev,
+                                              nrequests);
+    } else {
 			ht_inserts<<<blocks, 128>>>(htable_dev, N_ht,
 			                            bricks_dev, nrequests);
 		}

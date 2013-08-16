@@ -18,6 +18,7 @@ size_t blockingfactor();
 bool naive(); /* use 'naive' algorithm */
 bool verbose();
 bool nosync(); /* use 'nosync' algorithm */
+bool nosync_lazy();
 
 #ifdef __cplusplus
 }

@@ -11,6 +11,7 @@ static gint blockfactor;
 static bool ht_naive;
 static bool is_verbose;
 static bool ht_nosync;
+static bool ht_nosync_lazy;
 static GOptionEntry options[] = {
 	{"debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Debug mode", NULL},
 	{"hashsz", 'h', 0, G_OPTION_ARG_INT, &ht_size, "HT size in X", NULL},
@@ -28,6 +29,8 @@ static GOptionEntry options[] = {
 	 "enable chatty/annoying output.", NULL},
 	{"sync", 's', false, G_OPTION_ARG_NONE, &ht_nosync,
 	 "use nosync (in shared mem) algorithm", NULL},
+  {"lazy", 'y', false, G_OPTION_ARG_NONE, &ht_nosync_lazy,
+   "use nosync-lazy algorithm", NULL},
 	{ NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -74,3 +77,4 @@ size_t blockingfactor() { return (size_t)blockfactor; }
 bool naive() { return ht_naive; }
 bool verbose() { return is_verbose; }
 bool nosync() { return ht_nosync; }
+bool nosync_lazy() { return ht_nosync_lazy; }
