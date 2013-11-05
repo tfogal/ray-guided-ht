@@ -256,6 +256,8 @@ main(int argc, char* argv[])
 			       main_brickdims[2], main_brickdims[3]);
 		}
 	}
+	assert((main_brickdims[0] * main_brickdims[1] * main_brickdims[2] *
+	        main_brickdims[3]) > 0);
 	size_t fault;
 	if(!requests_verify(bricks_host, nrequests, main_brickdims, &fault)) {
 		fprintf(stderr, "Brick request %zu is garbage.\n", fault);

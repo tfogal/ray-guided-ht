@@ -4,7 +4,7 @@
 
 static gboolean debug;
 static gint ht_size;
-static gint bricks[3]; /* per-dimension. */
+static gint bricks[3] = {1,1,1}; /* per-dimension. */
 static gint n_lod;
 static gchar* requestf; /* where to read requests from */
 static gint blockfactor;
@@ -59,11 +59,6 @@ argparse(int argc, char* argv[])
 	if(bricks[1] <= 0) {
 		g_critical("number of Z bricks must be positive.");
 		exit(EXIT_FAILURE);
-	}
-	const size_t nbricks = (size_t)bricks[0]*bricks[1]*bricks[2]*n_lod;
-	if(nbricks < (size_t)ht_size) {
-		g_warning("more hash table entries (%d) than bricks (%zu)!",
-		          ht_size, nbricks);
 	}
 }
 
