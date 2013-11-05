@@ -24,7 +24,7 @@ serialize(const uint32_t bidx[4], const unsigned bdims[4])
 #	define MAX_BRICK_REQUESTS 512U
 #endif
 
-__constant__ unsigned brickdims[4] = {0};
+__constant__ static unsigned brickdims[4] = {0};
 
 /* try to find the given value in the table.  this may not occur at the hashed
  * position, of course, since collisions may occur.  it would be at subsequent
@@ -175,6 +175,9 @@ ht_inserts_simple(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		                      i) % nbricks;
 		unsigned serialized = serialize(&bricks[bid*4], brickdims);
 
+		if(nbricks == 54) {
+			printf("attempting insert of %u\n", serialized);
+		}
 		flush_elem(ht, htlen, serialized);
 	}
 }
@@ -211,21 +214,10 @@ main(int argc, char* argv[])
 	argparse(argc, argv);
 
 	const size_t N_ht = htN();
-	const unsigned main_brickdims[4] = { bricksX(), bricksY(), bricksZ(),
-	                                     LODs() };
-
-	cudaError_t cerr = cudaMemcpyToSymbol(brickdims, main_brickdims,
-	                                      sizeof(unsigned)*4, 0,
-	                                      cudaMemcpyHostToDevice);
-	if(cerr != cudaSuccess) {
-		fprintf(stderr, "could not copy brickdim data: %s\n",
-		        cudaGetErrorString(cerr));
-		exit(EXIT_FAILURE);
-	}
 
 	/* create our hash table, and a chunk of memory to read it back into
 	 * when we're done.  We could also use pinned memory.. but...
-	 * well, we should try that, too. */
+	 * well, we should try that, too.  Someday. */
 	unsigned* htable_dev = NULL;
 	cudaError_t err = cudaMalloc(&htable_dev,
 	                             N_ht*sizeof(unsigned));
@@ -254,9 +246,28 @@ main(int argc, char* argv[])
 		        requestfile());
 		exit(EXIT_FAILURE);
 	}
+	unsigned main_brickdims[4] = { bricksX(), bricksY(), bricksZ(),
+	                               LODs() };
+	if(is_ba(requestfile())) {
+		brickdims_ba(requestfile(), main_brickdims);
+		if(verbose()) {
+			printf("updated brick dims: [%u %u %u %u]\n",
+			       main_brickdims[0], main_brickdims[1],
+			       main_brickdims[2], main_brickdims[3]);
+		}
+	}
 	size_t fault;
 	if(!requests_verify(bricks_host, nrequests, main_brickdims, &fault)) {
 		fprintf(stderr, "Brick request %zu is garbage.\n", fault);
+		exit(EXIT_FAILURE);
+	}
+
+	cudaError_t cerr = cudaMemcpyToSymbol(brickdims, main_brickdims,
+	                                      sizeof(unsigned)*4, 0,
+	                                      cudaMemcpyHostToDevice);
+	if(cerr != cudaSuccess) {
+		fprintf(stderr, "could not copy brickdim data: %s\n",
+		        cudaGetErrorString(cerr));
 		exit(EXIT_FAILURE);
 	}
 
@@ -287,15 +298,15 @@ main(int argc, char* argv[])
 		if(naive()) {
 			ht_inserts_simple<<<blocks, 128>>>(htable_dev, N_ht,
 			                                   bricks_dev,
-							   nrequests);
+			                                   nrequests);
 		} else if(nosync()) {
 			ht_inserts_nosync<<<blocks, 128>>>(htable_dev, N_ht,
 			                                   bricks_dev,
 			                                   nrequests);
 		} else if(nosync_lazy()) {
-      ht_inserts_nosync_lazy<<<blocks, 128>>>(htable_dev, N_ht, bricks_dev,
-                                              nrequests);
-    } else {
+			ht_inserts_nosync_lazy<<<blocks, 128>>>(htable_dev, N_ht, bricks_dev,
+			                                        nrequests);
+		} else {
 			ht_inserts<<<blocks, 128>>>(htable_dev, N_ht,
 			                            bricks_dev, nrequests);
 		}
@@ -307,11 +318,11 @@ main(int argc, char* argv[])
 
 		/* get the hash table back. */
 		err = cudaMemcpy(htable_host, htable_dev,
-				 N_ht*sizeof(unsigned),
-				 cudaMemcpyDeviceToHost);
+		                 N_ht*sizeof(unsigned),
+		                 cudaMemcpyDeviceToHost);
 		if(err != cudaSuccess) {
 			fprintf(stderr, "copy error (htable) dev -> host: %s\n",
-				cudaGetErrorString(err));
+			        cudaGetErrorString(err));
 			exit(EXIT_FAILURE);
 		}
 		/* we added 1 to each entry when they went in the HT: subtract
@@ -329,10 +340,9 @@ main(int argc, char* argv[])
 			exit(EXIT_FAILURE);
 		}
 
-		nrequests = remove_entries(htable_host, N_ht, bricks_host, nrequests,
-					   main_brickdims);
-		if(!requests_verify(bricks_host, nrequests, main_brickdims,
-		   NULL)) {
+		nrequests = remove_entries(htable_host, N_ht, bricks_host,
+		                           nrequests, main_brickdims);
+		if(!requests_verify(bricks_host, nrequests, main_brickdims, NULL)) {
 			fprintf(stderr, "Removing entries broke table.\n");
 			exit(EXIT_FAILURE);
 		}
@@ -348,7 +358,7 @@ main(int argc, char* argv[])
 
 		/* copy modified brick requests back to device buffer. */
 		err = cudaMemcpy(bricks_dev, bricks_host, brickbytes,
-				 cudaMemcpyHostToDevice);
+		                 cudaMemcpyHostToDevice);
 		if(err != cudaSuccess) {
 			fprintf(stderr, "cuda copy error (bricks) host -> "
 			        "dev: %s\n", cudaGetErrorString(err));

@@ -271,3 +271,30 @@ requests_ba(const char* filename, size_t* n)
 	return bricks;
 	return NULL;
 }
+
+/** loads nbricks etc. from a .ba file. */
+void
+brickdims_ba(const char*filename, unsigned brickdims[4])
+{
+	BrickAccessFile baf(filename);
+	if(!baf.Load()) {
+		fprintf(stderr, "failed to load .ba file.\n");
+		abort();
+	}
+
+	brickdims[3] = (unsigned)baf.GetLoDCount();
+	const std::vector<UINT64VECTOR3>& counts = baf.GetBrickCounts();
+	brickdims[0] = (unsigned)counts[0][0];
+	brickdims[1] = (unsigned)counts[0][1];
+	brickdims[2] = (unsigned)counts[0][2];
+}
+
+bool
+is_ba(const char* filename)
+{
+	std::ifstream ifs(filename);
+	std::string first;
+	ifs >> first;
+	if(!ifs) { return false; }
+	return first == "Filename=";
+}
