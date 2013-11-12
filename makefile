@@ -17,6 +17,8 @@ Hash: ba-file.o ht.o opt.o requests.o SysTools.o table.o
 
 %.o: %.cu
 	$(NVCC) $(NVFLAGS) -c $^ -o $@
+%.ptx: %.cu
+	$(NVCC) $(NVFLAGS) --ptx -c $^
 
 clean:
 	rm -f Hash $(OBJ)
