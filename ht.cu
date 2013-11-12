@@ -175,9 +175,6 @@ ht_inserts_simple(unsigned* ht, const size_t htlen, const uint32_t* bricks,
 		                      i) % nbricks;
 		unsigned serialized = serialize(&bricks[bid*4], brickdims);
 
-		if(nbricks == 54) {
-			printf("attempting insert of %u\n", serialized);
-		}
 		flush_elem(ht, htlen, serialized);
 	}
 }
