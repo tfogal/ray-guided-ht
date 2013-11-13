@@ -1,0 +1,146 @@
+Filename=
+MaxBrickSize=256	256	256
+BrickOverlap=2	2	2
+LoDCount=12
+ LoD=0 DomainSize=2048	2048	1920 BrickCount=9	9	8
+ LoD=1 DomainSize=1024	1024	960 BrickCount=5	5	4
+ LoD=2 DomainSize=512	512	480 BrickCount=3	3	2
+ LoD=3 DomainSize=256	256	240 BrickCount=2	2	1
+ LoD=4 DomainSize=128	128	120 BrickCount=1	1	1
+ LoD=5 DomainSize=64	64	60 BrickCount=1	1	1
+ LoD=6 DomainSize=32	32	30 BrickCount=1	1	1
+ LoD=7 DomainSize=16	16	15 BrickCount=1	1	1
+ LoD=8 DomainSize=8	8	8 BrickCount=1	1	1
+ LoD=9 DomainSize=4	4	4 BrickCount=1	1	1
+ LoD=10 DomainSize=2	2	2 BrickCount=1	1	1
+ LoD=11 DomainSize=1	1	1 BrickCount=1	1	1
+
+ Subframe=0 PagedBrickCount=1
+[0            0      0      4] 
+ Frame=0 TotalPagedBrickCount=1 TotalSubframeCount=1
+ Subframe=0 PagedBrickCount=29
+[0            0      0      1] [3            0      0      1] [4            0      0      1] [1            1      0      1] [2            1      0      1] [1            2      0      1] [2            2      0      1] [0            3      0      1] [3            3      0      1] [4            3      0      1] [0            4      0      1] [3            4      0      1] [4            4      0      1] [1            0      1      1] [2            0      1      1] [0            1      1      1] [3            1      1      1] [4            1      1      1] [0            2      1      1] [3            2      1      1] [4            2      1      1] [1            3      1      1] [2            3      1      1] [1            4      1      1] [2            4      1      1] [0            0      0      3] [1            0      0      3] [0            1      0      3] [1            1      0      3] 
+ Subframe=1 PagedBrickCount=33
+[0            0      1      1] [3            0      1      1] [4            0      1      1] [1            1      1      1] [2            1      1      1] [1            2      1      1] [2            2      1      1] [0            3      1      1] [3            3      1      1] [4            3      1      1] [0            4      1      1] [3            4      1      1] [4            4      1      1] [0            0      2      1] [1            0      2      1] [2            0      2      1] [3            0      2      1] [4            0      2      1] [0            1      2      1] [3            1      2      1] [4            1      2      1] [0            2      2      1] [3            2      2      1] [4            2      2      1] [0            3      2      1] [1            3      2      1] [2            3      2      1] [3            3      2      1] [4            3      2      1] [0            4      2      1] [1            4      2      1] [2            4      2      1] [3            4      2      1] 
+ Subframe=2 PagedBrickCount=4
+[1            1      2      1] [2            1      2      1] [1            2      2      1] [2            2      2      1] 
+ Frame=1 TotalPagedBrickCount=66 TotalSubframeCount=3
+ Frame=2 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=3 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=4 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=5 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Subframe=0 PagedBrickCount=6
+[4            4      2      1] [4            0      3      1] [4            1      3      1] [4            2      3      1] [4            3      3      1] [4            4      3      1] 
+ Frame=6 TotalPagedBrickCount=6 TotalSubframeCount=1
+ Frame=7 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=8 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=9 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=10 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=11 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=12 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=13 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=14 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=15 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=16 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=17 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=18 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=19 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=20 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=21 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=22 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=23 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=24 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Subframe=0 PagedBrickCount=3
+[0            0      0      2] [0            1      0      2] [0            2      0      2] 
+ Frame=25 TotalPagedBrickCount=3 TotalSubframeCount=1
+ Frame=26 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=27 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=28 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=29 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=30 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Subframe=0 PagedBrickCount=41
+[7            0      7      0] [8            0      7      0] [7            1      7      0] [8            1      7      0] [7            2      7      0] [8            2      7      0] [7            3      7      0] [8            3      7      0] [7            4      7      0] [8            4      7      0] [7            5      7      0] [8            5      7      0] [7            6      7      0] [8            6      7      0] [7            7      7      0] [8            7      7      0] [7            8      7      0] [8            8      7      0] [1            0      1      2] [1            1      1      2] [1            2      1      2] [0            0      3      1] [1            0      3      1] [2            0      3      1] [3            0      3      1] [0            1      3      1] [1            1      3      1] [2            1      3      1] [3            1      3      1] [0            2      3      1] [1            2      3      1] [2            2      3      1] [3            2      3      1] [0            3      3      1] [1            3      3      1] [2            3      3      1] [3            3      3      1] [0            4      3      1] [1            4      3      1] [2            4      3      1] [3            4      3      1] 
+ Frame=31 TotalPagedBrickCount=41 TotalSubframeCount=1
+ Subframe=0 PagedBrickCount=9
+[8            2      6      0] [8            3      6      0] [8            4      6      0] [8            5      6      0] [8            6      6      0] [8            7      6      0] [8            8      6      0] [8            0      6      0] [8            1      6      0] 
+ Frame=32 TotalPagedBrickCount=9 TotalSubframeCount=1
+ Frame=33 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=34 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=35 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=36 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=37 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=38 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=39 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=40 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=41 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=42 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=43 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=44 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=45 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=46 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=47 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=48 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=49 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=50 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=51 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=52 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=53 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=54 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=55 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Subframe=0 PagedBrickCount=9
+[0            0      7      0] [0            1      7      0] [0            2      7      0] [0            3      7      0] [0            4      7      0] [0            5      7      0] [0            6      7      0] [0            7      7      0] [0            8      7      0] 
+ Frame=56 TotalPagedBrickCount=9 TotalSubframeCount=1
+ Frame=57 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=58 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=59 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=60 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Subframe=0 PagedBrickCount=9
+[0            3      6      0] [0            4      6      0] [0            5      6      0] [0            6      6      0] [0            7      6      0] [0            8      6      0] [0            0      6      0] [0            1      6      0] [0            2      6      0] 
+ Frame=61 TotalPagedBrickCount=9 TotalSubframeCount=1
+ Frame=62 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=63 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=64 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=65 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=66 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=67 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Subframe=0 PagedBrickCount=1
+[1            1      0      2] 
+ Frame=68 TotalPagedBrickCount=1 TotalSubframeCount=1
+ Frame=69 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Subframe=0 PagedBrickCount=2
+[2            0      0      2] [2            1      0      2] 
+ Frame=70 TotalPagedBrickCount=2 TotalSubframeCount=1
+ Subframe=0 PagedBrickCount=1
+[1            0      0      2] 
+ Frame=71 TotalPagedBrickCount=1 TotalSubframeCount=1
+ Frame=72 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Subframe=0 PagedBrickCount=2
+[1            2      0      2] [2            2      0      2] 
+ Frame=73 TotalPagedBrickCount=2 TotalSubframeCount=1
+ Frame=74 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=75 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=76 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=77 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=78 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=79 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=80 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=81 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=82 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=83 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=84 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=85 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=86 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=87 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=88 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=89 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=90 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=91 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=92 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=93 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=94 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=95 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=96 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=97 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=98 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=99 TotalPagedBrickCount=0 TotalSubframeCount=0
+ Frame=100 TotalPagedBrickCount=0 TotalSubframeCount=0

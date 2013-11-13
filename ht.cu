@@ -262,8 +262,7 @@ main(int argc, char* argv[])
 	}
 
 	cudaError_t cerr = cudaMemcpyToSymbol(brickdims, main_brickdims,
-	                                      sizeof(unsigned)*4, 0,
-	                                      cudaMemcpyHostToDevice);
+	                                      sizeof(unsigned)*4);
 	if(cerr != cudaSuccess) {
 		fprintf(stderr, "could not copy brickdim data: %s\n",
 		        cudaGetErrorString(cerr));
